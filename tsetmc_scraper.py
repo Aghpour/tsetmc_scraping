@@ -32,6 +32,7 @@ for item in data:
         ids.append(code)
         tickers.append(ticker)
 ids = list(dict.fromkeys(ids))
+ids_len = len(ids)
 ##########################################    
 ticker_data = []
 identification = []
