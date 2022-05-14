@@ -5,17 +5,34 @@ import time
 import tsetmc
 from tsetmc.instruments import Instrument
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
 
 nest_asyncio.apply()
 start = time.time()
 
-df = pd.read_csv('tickers_urls.csv')
-df_to_list = df['urls'].values.tolist()
+# get tickers id's
+url = 'http://tsetmc.com/tsev2/data/MarketWatchPlus.aspx'
+r = requests.get(url)
+soup = BeautifulSoup(r.content, 'html.parser')
+data = soup.text.split(';')
+
 ids = []
-for i in df_to_list:
-    ids.append(i[51:])
-ids_len = len(ids)
-    
+tickers = []
+numbers_chars = set('0123456789')
+names_chars = 'صندوق'
+
+for item in data:
+    code = item.split(',')[0]
+    ticker = item.split(',')[2].strip().replace('\u200c', '')
+    name = item.split(',')[3]
+    if any((c in numbers_chars) for c in ticker) or names_chars in name:
+        pass
+    else:
+        ids.append(code)
+        tickers.append(ticker)
+ids = list(dict.fromkeys(ids))
+##########################################    
 ticker_data = []
 identification = []
 introduction = []
