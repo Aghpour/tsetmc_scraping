@@ -7,6 +7,7 @@ from tsetmc.instruments import Instrument
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from IPython.display import clear_output
 
 nest_asyncio.apply()
 start = time.time()
@@ -110,6 +111,7 @@ async def main():
             ticker_data.append(ticker_dict)
             ticker_name = iden['نماد فارسی']
             counter += 1
+            clear_output(wait=True)
             print(f'{counter} of {ids_len}, {ticker_name}')
 
 
