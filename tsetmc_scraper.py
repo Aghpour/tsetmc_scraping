@@ -39,7 +39,7 @@ ticker_data = []
 identification = []
 introduction = []
 page = []
-live = []
+
 share_holders = []
 
 async def main():
@@ -58,9 +58,7 @@ async def main():
             page_data = await inst.page_data()
             page.append(page_data)
             ##########################################
-            live_data = await inst.live_data()
-            live.append(live_data)
-            ##########################################
+
             shareholder = await inst.holders()
             shareholder['نماد فارسی'] = iden['نماد فارسی']
             share_holders.append(shareholder)
@@ -96,16 +94,6 @@ async def main():
             ticker_dict['سرمایه'] = intro['سرمایه']
             ticker_dict['سال مالی'] = intro['سال مالی']
             ticker_dict['شناسه ملی'] = intro['شناسه ملی']
-            ##########################################
-            live_list = ['pc', 'status']
-            for key in live_list:
-                try:
-                    live_data[key]
-                except:
-                    live_data[key] = None
-            
-            ticker_dict['قیمت پایانی'] = live_data['pc']
-            ticker_dict['وضعیت'] = live_data['status']
             ##########################################
                 
             ticker_data.append(ticker_dict)
