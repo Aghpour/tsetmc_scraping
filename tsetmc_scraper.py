@@ -1,116 +1,75 @@
-import asyncio
-import aiohttp
-import nest_asyncio
-import time
-import tsetmc
-from tsetmc.instruments import Instrument
+import os
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from IPython.display import clear_output
+import time
+import ast
+from ratelimit import limits, RateLimitException, sleep_and_retry
 
-nest_asyncio.apply()
 start = time.time()
-
-# get tickers id's
-url = 'http://tsetmc.com/tsev2/data/MarketWatchPlus.aspx'
-r = requests.get(url)
+# find all listed tickers
+url_marketwatch = 'http://tsetmc.com/tsev2/data/MarketWatchPlus.aspx'
+r = requests.get(url_marketwatch)
 soup = BeautifulSoup(r.content, 'html.parser')
 data = soup.text.split(';')
 
-ids = []
-tickers = []
-numbers_chars = set('0123456789')
-names_chars = 'صندوق'
+# extract tickers code's, E.g.: http://www.tsetmc.com/Loader.aspx?ParTree=151311&i={35425587644337450}
+tickers_codes = []
+for index, item in enumerate(data):
+    if len(data[index].split(',')) == 8:
+        tickers_codes.append(data[index].split(',')[0])
+tickers_codes_unique = list(set(tickers_codes))
+        
+headers = {'User-Agent': '*put your user agent hear*'}
+dict_ticker = {}
+shareholders = []
+interval = 4
+max_calls = 10
 
-for item in data:
-    code = item.split(',')[0]
-    ticker = item.split(',')[2].strip().replace('\u200c', '')
-    name = item.split(',')[3]
-    if any((c in numbers_chars) for c in ticker) or names_chars in name:
-        pass
-    else:
-        ids.append(code)
-        tickers.append(ticker)
-ids = list(dict.fromkeys(ids))
-ids_len = len(ids)
-##########################################    
-ticker_data = []
-identification = []
-introduction = []
-page = []
+@sleep_and_retry
+@limits(calls=max_calls, period=interval)
+def get_ticker(item):
+    url_identity = f'http://cdn.tsetmc.com/api/Instrument/GetInstrumentIdentity/{item}'
+    r = s.get(url_identity, headers=headers)
+    identity_page = ast.literal_eval(r.text)  
+    sector = identity_page['instrumentIdentity']['sector']['lSecVal']
+    en_instrument_id = identity_page['instrumentIdentity']['instrumentID']  # unique
+    name = identity_page['instrumentIdentity']['lSoc30']
+    en_company_id = identity_page['instrumentIdentity']['cIsin']
+    ticker = identity_page['instrumentIdentity']['lVal18AFC']
+    exchange = identity_page['instrumentIdentity']['cgrValCotTitle']
+    dict_ticker[en_instrument_id] = [sector, name, en_company_id, ticker, exchange]
+    os.system('cls')
+    print(i, ticker)
+    
+    
+def shareholder(item):  
+    url_shareholder = f'http://cdn.tsetmc.com/api/Shareholder/GetInstrumentShareHolderLast/{item}'
+    r = s.get(url_shareholder, headers=headers)
+    shareholder_page = ast.literal_eval(r.text)['shareHolder']
+    df_shareholder = pd.DataFrame(shareholder_page)
+    shareholders.append(df_shareholder)
 
-share_holders = []
-
-async def main():
-    async with aiohttp.ClientSession() as tsetmc.SESSION:
-        counter = 0
-        for url in ids:
-            inst = Instrument(url)
-            ##########################################
-            iden = await inst.identification()
-            identification.append(iden)
-            ##########################################
-            intro = await inst.introduction()
-            intro['نماد فارسی'] = iden['نماد فارسی']
-            introduction.append(intro)
-            ##########################################
-            page_data = await inst.page_data()
-            page.append(page_data)
-            ##########################################
-
-            shareholder = await inst.holders()
-            shareholder['نماد فارسی'] = iden['نماد فارسی']
-            share_holders.append(shareholder)
-            ##########################################
-            
-            ticker_dict = {
-            'کد 12 رقمی شرکت':iden['کد 12 رقمی شرکت'],
-            'نام شرکت':iden['نام شرکت'],
-            'کد 12 رقمی نماد':iden['کد 12 رقمی نماد'],
-            'نماد فارسی':iden['نماد فارسی'],
-            'بازار':iden['بازار'],
-            'کد تابلو':iden['کد تابلو'],
-            'گروه صنعت':iden['گروه صنعت'],
-            ##########################################
-            'تعداد سهام':page_data['z'],
-            'حجم مبنا':page_data['bvol'],
-            'درصد شناوری':page_data['free_float']
-            }
-            ##########################################
-            intro_list = ['موضوع فعالیت','مدیر عامل', 'نشانی دفتر', 'نشانی' ,'نشانی امور سهام', 'حسابرس', 'سرمایه', 'سال مالی', 'شناسه ملی']
-            for key in intro_list:
-                try:
-                    intro[key]
-                except:
-                    intro[key] = None
-            
-            ticker_dict['موضوع فعالیت'] = intro['موضوع فعالیت']
-            ticker_dict['مدیر عامل'] = intro['مدیر عامل']
-            ticker_dict['نشانی دفتر'] = intro['نشانی دفتر']
-            ticker_dict['نشانی'] = intro['نشانی']
-            ticker_dict['نشانی امور سهام'] = intro['نشانی امور سهام']
-            ticker_dict['حسابرس'] = intro['حسابرس']
-            ticker_dict['سرمایه'] = intro['سرمایه']
-            ticker_dict['سال مالی'] = intro['سال مالی']
-            ticker_dict['شناسه ملی'] = intro['شناسه ملی']
-            ##########################################
-                
-            ticker_data.append(ticker_dict)
-            ticker_name = iden['نماد فارسی']
-            counter += 1
-            clear_output(wait=True)
-            print(f'{counter} of {ids_len}, {ticker_name}')
-
-
-asyncio.run(main())
+with requests.Session() as s:
+    for i, item in enumerate(tickers_codes_unique):
+        get_ticker(item)
+        try:
+            shareholder(item)
+        except:
+            print(f'shareholder passed: {item}')
+        
+# info df
+df_info = pd.DataFrame.from_dict(dict_ticker, orient='index', columns=['sector','name', 'en_company_id', 'ticker', 'exchange'])
+df_info['en_instrument_id'] = df_info.index
+df_info.reset_index(drop=True)
+# shareholders df
+df_shareholder = pd.concat(shareholders)
+df_shareholder = df_shareholder.rename(columns={'cIsin':'en_company_id'})
+# merge 2 df's
+df_merged = pd.merge(df_shareholder, df_info, how='right', on = 'en_company_id')
+df_merged = df_merged.drop_duplicates(subset=['en_company_id', 'shareHolderName'], keep='first')
+# export to cvs
+df_merged.to_csv (r'share_holders.csv', index = False, header=True, sep ='\t')
 
 end = time.time()
-total_time = end - start
-print("It took {} seconds to fetch {} tickers information.".format(total_time, len(ticker_data)))
-
-df = pd.DataFrame.from_dict(ticker_data)
-df.to_csv (r'ticker_data.csv', index = False, header=True, sep ='\t')
-
-df_sh = pd.concat(share_holders)
-df_sh.to_csv (r'share_holders.csv', index = False, header=True, sep ='\t')
+print(f'total time: {end}-{start}')
