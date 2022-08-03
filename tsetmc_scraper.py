@@ -72,4 +72,4 @@ df_merged = df_merged.drop_duplicates(subset=['en_company_id', 'shareHolderName'
 df_merged.to_csv (r'share_holders.csv', index = False, header=True, sep ='\t')
 
 end = time.time()
-print(f'total time: {end}-{start}')
+print("--- %0.1fs seconds ---" % (end - start))
