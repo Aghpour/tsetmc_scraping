@@ -61,7 +61,7 @@ with requests.Session() as s:
 # info df
 df_info = pd.DataFrame.from_dict(dict_ticker, orient='index', columns=['sector','name', 'en_company_id', 'ticker', 'exchange'])
 df_info['en_instrument_id'] = df_info.index
-df_info.reset_index(drop=True)
+df_info = df_info.reset_index(drop=True)
 # shareholders df
 df_shareholder = pd.concat(shareholders)
 df_shareholder = df_shareholder.rename(columns={'cIsin':'en_company_id'})
