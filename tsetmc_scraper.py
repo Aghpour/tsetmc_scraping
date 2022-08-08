@@ -20,7 +20,7 @@ for index, item in enumerate(data):
         tickers_codes.append(data[index].split(',')[0])
 tickers_codes_unique = list(set(tickers_codes))
         
-headers = {'User-Agent': '*put your user agent hear*'}
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'}
 dict_ticker = {}
 shareholders = []
 interval = 4
