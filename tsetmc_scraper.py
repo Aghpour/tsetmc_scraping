@@ -35,7 +35,7 @@ for industry_url in industry_urls:
     for company in industry_tickers:
         insCode = company['instrument']['insCode']
         symbol = company['instrument']['lVal18AFC']
-        if any(char.isdigit() for char in symbol): # rule out debt instruments
+        if any(char.isdigit() for char in symbol): # drop debt instruments
             pass
         else:
             tickers_code.append(insCode)
