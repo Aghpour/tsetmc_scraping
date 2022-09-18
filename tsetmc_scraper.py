@@ -18,9 +18,11 @@ industry_codes = []
 for i in data:
     typee = i['type']
     code = i['code']
+    if code<10:
+        code = f'0{code}'
     if typee == 'IndustrialGroup':
         industry_codes.append(code)
-        
+
 industry_urls = []
 for code in industry_codes:
     industry_url = f'http://cdn.tsetmc.com/api/ClosingPrice/GetRelatedCompany/{code}'
