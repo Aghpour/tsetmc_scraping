@@ -87,7 +87,7 @@ df_shareholder = pd.concat(shareholders)
 df_shareholder = df_shareholder.rename(columns={'cIsin':'en_company_id'})
 # merge 2 df's
 df_merged = pd.merge(df_shareholder, df_info, how='right', on = 'en_company_id')
-df_merged = df_merged.drop_duplicates(subset=['en_company_id', 'shareHolderID'], keep='first')
+#df_merged = df_merged.drop_duplicates(subset=['en_company_id', 'shareHolderID'], keep='first')
 # export to cvs
 df_merged.to_csv (r'share_holders.csv', index = False, header=True, sep ='\t')
 
