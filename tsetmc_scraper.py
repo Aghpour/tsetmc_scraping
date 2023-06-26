@@ -4,6 +4,7 @@ import requests
 import time
 import json
 from ratelimit import limits, RateLimitException, sleep_and_retry
+from datetime import date
 
 start = time.time()
 ####################################
@@ -62,11 +63,13 @@ def get_ticker(insCode):
     os.system('cls')
     print(i, ticker)
 
+today = date.today()
+current_date = today.strftime("%Y%m%d")
 shareholders = []
-def shareholder(insCode):  
-    url_shareholder = f'http://cdn.tsetmc.com/api/Shareholder/GetInstrumentShareHolderLast/{insCode}'
+def shareholder(insCode, current_date):  
+    url_shareholder = f'http://cdn.tsetmc.com/api/Shareholder/{insCode}/{current_date}'
     r = s.get(url_shareholder, headers=headers)
-    shareholder_page = json.loads(r.text)['shareHolder']
+    shareholder_page = json.loads(r.text)['shareShareholder']
     df_shareholder = pd.DataFrame(shareholder_page)
     shareholders.append(df_shareholder)
 
@@ -74,7 +77,7 @@ with requests.Session() as s:
     for i, insCode in enumerate(tickers_code):
         get_ticker(insCode)
         try:
-            shareholder(insCode)
+            shareholder(insCode, current_date)
         except:
             print(f'shareholder passed: {insCode}')
         
@@ -87,9 +90,9 @@ df_shareholder = pd.concat(shareholders)
 df_shareholder = df_shareholder.rename(columns={'cIsin':'en_company_id'})
 # merge 2 df's
 df_merged = pd.merge(df_shareholder, df_info, how='right', on = 'en_company_id')
-#df_merged = df_merged.drop_duplicates(subset=['en_company_id', 'shareHolderID'], keep='first')
+df_merged = df_merged.drop_duplicates(subset=['en_company_id', 'shareHolderID'], keep='first')
 # export to cvs
-df_merged.to_csv (r'share_holders.csv', index = False, header=True, sep ='\t')
+df_merged.to_csv (r'share_holders_current_date.csv', index = False, header=True, sep ='\t')
 
 end = time.time()
 print("--- %0.1fs seconds ---" % (end - start))
