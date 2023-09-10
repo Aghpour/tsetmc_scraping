@@ -92,7 +92,7 @@ df_shareholder = df_shareholder.rename(columns={'cIsin':'en_company_id'})
 df_merged = pd.merge(df_shareholder, df_info, how='right', on = 'en_company_id')
 df_merged = df_merged.drop_duplicates(subset=['en_company_id', 'shareHolderID'], keep='first')
 # export to cvs
-df_merged.to_csv (r'share_holders_current_date.csv', index = False, header=True, sep ='\t')
+df_merged.to_csv (rf'share_holders_{current_date}.csv', index = False, header=True, sep ='\t')
 
 end = time.time()
 print("--- %0.1fs seconds ---" % (end - start))
